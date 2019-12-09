@@ -3,53 +3,42 @@ from typing import List
 
 
 class JSONContracts:
-    uhql_contract = {
+    uhql_request_contract = {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "title": "Get list",
         "type": "object",
         "properties": {
-            "resource": {
-                "type": "string"
-            },
-            "page": {
-                "type": "integer"
-            },
-            "perpage": {
-                "type": "integer"
-            },
+            "resource": {"type": "string"},
+            "page": {"type": "integer"},
+            "perpage": {"type": "integer"},
             "filters": {
                 "type": "array",
-                "items": [
-                    {
-                        "type": "object",
-                        "properties": {
-                            "field": {
-                                "description": "field name to apply this filter",
-                                "type": "string"
-                            },
-                            "operation": {
-                                "type": "string",
-                                "enum": ["=", "!=", ">", "<"]  # TODO: definir corretamente quais os tipos disponiveis.
-                            },
-                            "value": {
-                                "description": "this is a value that matches anything"
-                            }
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "field": {
+                            "description": "field name to apply this filter",
+                            "type": "string",
                         },
-                        "required": ["field", "operation", "value"]
-                    }
-                ]
+                        "op": {
+                            "type": "string",
+                            "enum": [
+                                "==",
+                                "!=",
+                                ">",
+                                "<",
+                            ],  # TODO: definir corretamente quais os tipos disponiveis.
+                        },
+                        "value": {
+                            "description": "this is a value that matches anything"
+                        },
+                    },
+                    "required": ["field", "op", "value"],
+                },
             },
-            "schema": {
-                "type": "object"
-            }
+            "schema": {"type": "object"},
         },
-        "required": [
-            "resource",
-            "page",
-            "perpage",
-            "filters",
-            "schema"
-        ]
+        "required": ["resource", "page", "perpage", "filters", "schema"],
     }
 
 
