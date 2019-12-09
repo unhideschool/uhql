@@ -1,0 +1,10 @@
+__pycache__
+*pyc
+.idea/workspace.xml
+.idea/tasks.xml
+.swp
+*sqlite
+reqs/*
+.idea/
+.DS_Store
+robots/*.txt
