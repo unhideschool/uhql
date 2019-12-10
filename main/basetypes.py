@@ -1,13 +1,10 @@
 # TODO: Criar plugin de Auth do UNHIDEAPI (mock: return true)
 # TODO: Criar plugin de DataProvider do UNHIDEAPI
 from abc import ABCMeta, abstractmethod
-from dataclasses import dataclass
 from decimal import Decimal
-from typing import Type, List, Dict, Union
+from typing import Type, List, Union
 
 T = Type
-
-from .basestructures import UHOperationTypes, UHFilterTypes
 
 
 class UHQLException(Exception):
@@ -16,7 +13,7 @@ class UHQLException(Exception):
 
 class UHQLBaseFilter:
     def __init__(
-        self, field: str, op: str, value: Union[str, Decimal, int, bool, float]
+            self, field: str, op: str, value: Union[str, Decimal, int, bool, float]
     ):
         self.field = field
         self.op = op
@@ -24,15 +21,15 @@ class UHQLBaseFilter:
 
 
 class UHQLUserRequest:
-    def __init__(self, r: dict, max_perpage=250):
+    def __init__(self, r: dict, page: int = 1, perpage: int = 250, order_by: str = ''):
 
         # Parse Request Object
         self.resource: str = r["resource"]
-        self.schema: str = r["schema"]
+        self.schema: str = r["schema"] if 'schema' in r else {}
 
-        self.page: int = r["page"]
-        self.perpage: int = min(r["perpage"], max_perpage)
-        self.order_by: str = r["order_by"]
+        self.page: int = r["page"] if 'page' in r else page
+        self.perpage: int = min(r["perpage"], perpage)
+        self.order_by: str = r["order_by"] if 'order_by' in r else order_by
 
         self.filters: List[UHQLBaseFilter] = []
 
