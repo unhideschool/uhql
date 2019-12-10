@@ -28,7 +28,7 @@ class UHQLUserRequest:
         self.schema: str = r["schema"] if 'schema' in r else {}
 
         self.page: int = r["page"] if 'page' in r else page
-        self.perpage: int = min(r["perpage"], perpage)
+        self.perpage: int = r["perpage"] if 'perpage' in r else perpage
         self.order_by: str = r["order_by"] if 'order_by' in r else order_by
 
         self.filters: List[UHQLBaseFilter] = []

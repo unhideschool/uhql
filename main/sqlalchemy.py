@@ -46,6 +46,7 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
             raise UHQLException("Invalid Filter")
 
         if page:
+            page -= 1
             # todo: fix paginacao contando a partir de "1"
             q = q.order_by(order_by).limit(perpage).offset(page * perpage)
 
