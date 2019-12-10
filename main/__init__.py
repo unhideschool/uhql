@@ -10,14 +10,7 @@ from .data import JSONContracts
 T = TypeVar("T")
 
 
-def UHQL_class_maker(dataprovider):
-    def uhql_builder():
-        return UHQLBaseClass(dataprovider)
-
-    return uhql_builder
-
-
-class UHQLBaseClass:
+class UHQL:
     def __init__(
         self,
         dataprovider: UHQLBaseDataProvider,
@@ -80,7 +73,6 @@ class UHQLBaseClass:
         ]
 
         return get_list_data
-
 
 
 # class UHQL:
