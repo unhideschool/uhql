@@ -24,22 +24,31 @@ class UHQLBaseFilter:
 
 
 class UHQLUserRequest:
-    def __init__(self, r: dict):
+    def __init__(self, r: dict, max_perpage=250):
 
         # Parse Request Object
         self.resource: str = r["resource"]
         self.schema: str = r["schema"]
 
         self.page: int = r["page"]
-        self.perpage: int = r["perpage"]
+        self.perpage: int = min(r["perpage"], max_perpage)
         self.order_by: str = r["order_by"]
 
         self.filters: List[UHQLBaseFilter] = []
-        for f in r["filters"]:
-            field = f["field"]
-            op = f["op"]
-            value = f["value"]
-            self.filters.append(UHQLBaseFilter(field, op, value))
+
+        try:
+            filterlist = r["filters"]
+        except KeyError:
+            filterlist = []
+
+        try:
+            for f in filterlist:
+                field = f["field"]
+                op = f["op"]
+                value = f["value"]
+                self.filters.append(UHQLBaseFilter(field, op, value))
+        except KeyError as e:
+            raise UHQLException("Invalid Filter Format")
 
 
 class UHQLBaseDataProvider(metaclass=ABCMeta):

@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Type, Dict, List, Callable, Union, TypeVar
 
 import jsonschema
+from jsonschema import ValidationError
 
 from .basetypes import UHQLBaseDataProvider, UHQLUserRequest, UHQLException
 from .tools import logged_method
@@ -65,7 +66,10 @@ class UHQL:
     def get_list(self, *, jsonrequest: dict):
 
         # validar schema json
-        jsonschema.validate(jsonrequest, JSONContracts.uhql_request_contract)
+        try:
+            jsonschema.validate(jsonrequest, JSONContracts.uhql_request_contract)
+        except ValidationError as e:
+            raise UHQLException(e.message)
 
         user_request = UHQLUserRequest(jsonrequest)
 

@@ -6,12 +6,13 @@ def logged_method(f):
     def logged_method_decorator(*args, **kwargs):
         self: "UHQL" = args[0]
 
+        # Do login
         self.d.login()
-        if self.d.can(kwargs["jsonrequest"]):
-            rv = f(*args, **kwargs)
-        else:
-            raise Exception("UNAUTHORIZED")
 
+        # Run the method
+        rv = f(*args, **kwargs)
+
+        # Do logout
         self.d.logoff()
         return rv
     return logged_method_decorator
