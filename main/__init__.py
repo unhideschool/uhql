@@ -3,7 +3,7 @@ from typing import Type, Dict, List, Callable, Union, TypeVar
 
 import jsonschema
 
-from .basetypes import UHQLBaseDataProvider, UHQLUserRequest
+from .basetypes import UHQLBaseDataProvider, UHQLUserRequest, UHQLException
 from .tools import logged_method
 from .data import JSONContracts
 
@@ -15,9 +15,11 @@ class UHQL:
         self,
         dataprovider: UHQLBaseDataProvider,
         extra_type_injector: Callable[[dict, str], T] = None,
+        can_func: Callable[[UHQLUserRequest], bool] = None,
     ):
         self.d = dataprovider
         self.extra_type_injector = extra_type_injector
+        self.can_func = can_func
 
     def build_from_schema(self, obj, schema):
         d = dict()
@@ -66,6 +68,10 @@ class UHQL:
         jsonschema.validate(jsonrequest, JSONContracts.uhql_request_contract)
 
         user_request = UHQLUserRequest(jsonrequest)
+
+        if callable(self.can_func):
+            if not self.can_func(user_request):
+                raise UHQLException("Unauthorized")
 
         get_list_data = [
             self.build_from_schema(obj, user_request.schema)
