@@ -38,7 +38,7 @@ class JSONContracts:
             },
             "schema": {"type": "object"},
         },
-        "required": ["resource", "page", "perpage", "filters", "schema"],
+        "required": ["resource"],
     }
 
 
