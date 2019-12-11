@@ -1,5 +1,7 @@
 from abc import abstractmethod
 
+from sqlalchemy.orm import Query
+
 from .basestructures import UHFilterTypes
 from .basetypes import UHQLBaseDataProvider, UHQLUserRequest, UHQLBaseFilter, UHQLException
 
@@ -17,7 +19,20 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
 
     def get_list(self, req: UHQLUserRequest):
 
-        # Split parameters from REQ
+        base_query = self.__get(req)
+        results = base_query.all()
+
+        return results
+
+    def get_one(self, req: UHQLUserRequest):
+
+        base_query = self.__get(req)
+        results = base_query.one_or_none()
+
+        return results
+
+    def __get(self, req: UHQLUserRequest) -> Query:
+
         resource = req.resource
         schema = req.schema
         page = req.page
@@ -25,11 +40,8 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
         filters = req.filters
         order_by = req.order_by
 
-        # response
-        response = []
-
         dbclass = self.__get_class(resource)
-        q = self.dbsession.query(dbclass)
+        base_query = self.dbsession.query(dbclass)
 
         valid_filters = [x.value for x in UHFilterTypes]
         for _filter in filters:
@@ -38,8 +50,7 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
             _op = _filter.op
 
             if _filter.op in valid_filters:
-                # TODO: invalid field attribute handling (AttributeError)
-                q = q.filter(eval(f"getattr(dbclass, _field) {_op} _value"))
+                base_query = base_query.filter(eval(f"getattr(dbclass, _field) {_op} _value"))
                 continue
 
             # Invalid operation specified.
@@ -47,12 +58,9 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
 
         if page:
             page -= 1
-            # todo: fix paginacao contando a partir de "1"
-            q = q.order_by(order_by).limit(perpage).offset(page * perpage)
+            base_query = base_query.order_by(order_by).limit(perpage).offset(page * perpage)
 
-        results = q.all()
-
-        return results
+        return base_query
 
     def __get_class(self, resource: str) -> T:
 
