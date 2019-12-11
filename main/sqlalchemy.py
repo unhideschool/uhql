@@ -29,6 +29,9 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
         base_query = self.__get(req)
         results = base_query.one_or_none()
 
+        if not results:
+            raise Exception(f'No resources found.')
+
         return results
 
     def __get(self, req: UHQLUserRequest) -> Query:
