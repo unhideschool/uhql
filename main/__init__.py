@@ -20,7 +20,6 @@ class UHQL:
         self.d = dataprovider
         self.extra_type_injector = extra_type_injector
         self.can_func = can_func
-
     # def build_from_schema(self, obj, schema):
     #     d = dict()
     #
