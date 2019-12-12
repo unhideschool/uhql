@@ -1,40 +1,78 @@
-from abc import ABCMeta, abstractmethod
-from typing import Type, Dict, List, Callable, Union, TypeVar
+from typing import Callable, TypeVar
 
 import jsonschema
 from jsonschema import ValidationError
 
 from .basetypes import UHQLBaseDataProvider, UHQLUserRequest, UHQLException
-from .tools import logged_method
 from .data import JSONContracts
+from .tools import logged_method
 
 T = TypeVar("T")
 
 
 class UHQL:
     def __init__(
-        self,
-        dataprovider: UHQLBaseDataProvider,
-        extra_type_injector: Callable[[dict, str], T] = None,
-        can_func: Callable[[UHQLUserRequest], bool] = None,
+            self,
+            dataprovider: UHQLBaseDataProvider,
+            extra_type_injector: Callable[[dict, str], T] = None,
+            can_func: Callable[[UHQLUserRequest], bool] = None,
     ):
         self.d = dataprovider
         self.extra_type_injector = extra_type_injector
         self.can_func = can_func
 
+    # def build_from_schema(self, obj, schema):
+    #     d = dict()
+    #
+    #     if "properties" not in schema:
+    #         return obj
+    #
+    #     for key in schema["properties"].keys():
+    #
+    #         if not hasattr(obj, key):
+    #             # key not in object
+    #             continue
+    #
+    #         prop = getattr(obj, key)
+    #
+    #         # Try to use our extra type injector
+    #         if callable(self.extra_type_injector):
+    #             extra_type_injector_response = self.extra_type_injector(prop, key)
+    #             if extra_type_injector_response:
+    #                 d[key] = extra_type_injector_response
+    #                 continue
+    #
+    #         if "type" not in schema["properties"][key]:
+    #             d[key] = prop
+    #
+    #         elif schema["properties"][key]["type"] == "object":
+    #
+    #             d[key] = self.build_from_schema(prop, schema["properties"][key])
+    #
+    #         elif schema["properties"][key]["type"] == "array":
+    #
+    #             d[key] = [
+    #                 self.build_from_schema(item, schema["properties"][key]["items"][0])
+    #                 for item in prop
+    #             ]
+    #
+    #         else:
+    #             d[key] = prop
+    #
+    #     return d
+
     def build_from_schema(self, obj, schema):
         d = dict()
 
-        if "properties" not in schema:
+        if schema == {}:
             return obj
 
-        for key in schema["properties"].keys():
+        for key in schema:
 
-            if not hasattr(obj, key):
-                # key not in object
+            if hasattr(obj, key):
+                prop = getattr(obj, key)
+            else:
                 continue
-
-            prop = getattr(obj, key)
 
             # Try to use our extra type injector
             if callable(self.extra_type_injector):
@@ -43,17 +81,15 @@ class UHQL:
                     d[key] = extra_type_injector_response
                     continue
 
-            if "type" not in schema["properties"][key]:
+            if not schema[key]:
                 d[key] = prop
 
-            elif schema["properties"][key]["type"] == "object":
+            elif type(schema[key]) == dict:
+                d[key] = self.build_from_schema(prop, schema[key])
 
-                d[key] = self.build_from_schema(prop, schema["properties"][key])
-
-            elif schema["properties"][key]["type"] == "array":
-
+            elif isinstance(prop, list):
                 d[key] = [
-                    self.build_from_schema(item, schema["properties"][key]["items"][0])
+                    self.build_from_schema(item, schema[key][0])
                     for item in prop
                 ]
 
@@ -113,4 +149,3 @@ class UHQL:
         get_one_data = self.build_from_schema(obj, user_request.schema)
 
         return get_one_data
-

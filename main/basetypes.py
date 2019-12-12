@@ -66,5 +66,6 @@ class UHQLBaseDataProvider(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_one(self, req: UHQLUserRequest, resourceid: int):
+    def get_one(self, req: UHQLUserRequest):
         pass
+

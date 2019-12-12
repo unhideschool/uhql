@@ -87,12 +87,8 @@ class UHQLTestSQLAlchemy(unittest.TestCase):
     def test_get_list(self):
 
         get_list_schema = {
-            "type": "object",
-            "properties": {
-                "id": {},
-                "occupation": {"type": "object",
-                               "properties": {}}
-            }
+                "id": "",
+                "occupation": {"name": ""}
         }
 
         request_data = {
@@ -110,12 +106,8 @@ class UHQLTestSQLAlchemy(unittest.TestCase):
     def test_get_one(self):
 
         get_one_schema = {
-            "type": "object",
-            "properties": {
-                "id": {},
-                "occupation": {"type": "object",
-                               "properties": {}}
-            }
+            "id": "",
+            "occupation": {}
         }
 
         request_data = {
