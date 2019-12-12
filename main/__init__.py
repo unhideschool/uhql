@@ -17,7 +17,7 @@ class UHQL:
             extra_type_injector: Callable[[dict, str], T] = None,
             can_func: Callable[[UHQLUserRequest], bool] = None,
     ):
-        self.d = dataprovider
+        self.d: UHQLBaseDataProvider = dataprovider
         self.extra_type_injector = extra_type_injector
         self.can_func = can_func
     # def build_from_schema(self, obj, schema):
@@ -64,7 +64,7 @@ class UHQL:
         d = dict()
 
         if schema == {}:
-            return obj
+            return self.d.get_dict_from_obj(obj)
 
         for key in schema:
 

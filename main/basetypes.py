@@ -2,7 +2,7 @@
 # TODO: Criar plugin de DataProvider do UNHIDEAPI
 from abc import ABCMeta, abstractmethod
 from decimal import Decimal
-from typing import Type, List, Union
+from typing import Type, List, Union, Dict
 
 T = Type
 
@@ -13,7 +13,7 @@ class UHQLException(Exception):
 
 class UHQLBaseFilter:
     def __init__(
-            self, field: str, op: str, value: Union[str, Decimal, int, bool, float]
+        self, field: str, op: str, value: Union[str, Decimal, int, bool, float]
     ):
         self.field = field
         self.op = op
@@ -21,15 +21,15 @@ class UHQLBaseFilter:
 
 
 class UHQLUserRequest:
-    def __init__(self, r: dict, page: int = 1, perpage: int = 250, order_by: str = ''):
+    def __init__(self, r: dict, page: int = 1, perpage: int = 250, order_by: str = ""):
 
         # Parse Request Object
         self.resource: str = r["resource"]
-        self.schema: str = r["schema"] if 'schema' in r else {}
+        self.schema: str = r["schema"] if "schema" in r else {}
 
-        self.page: int = r["page"] if 'page' in r else page
-        self.perpage: int = r["perpage"] if 'perpage' in r else perpage
-        self.order_by: str = r["order_by"] if 'order_by' in r else order_by
+        self.page: int = r["page"] if "page" in r else page
+        self.perpage: int = r["perpage"] if "perpage" in r else perpage
+        self.order_by: str = r["order_by"] if "order_by" in r else order_by
 
         self.filters: List[UHQLBaseFilter] = []
 
@@ -61,11 +61,17 @@ class UHQLBaseDataProvider(metaclass=ABCMeta):
         """Can the user realize this operation on this resource??"""
         return True
 
+    def get_dict_from_obj(self, obj) -> dict:
+        if not isinstance(obj, dict):
+            raise UHQLException(
+                "Your object need to be converted to dict -- please implement this function"
+            )
+        return obj
+
     @abstractmethod
-    def get_list(self, req: UHQLUserRequest):
+    def get_list(self, req: UHQLUserRequest) -> List[Dict]:
         pass
 
     @abstractmethod
     def get_one(self, req: UHQLUserRequest):
         pass
-
