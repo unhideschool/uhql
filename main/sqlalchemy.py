@@ -1,5 +1,5 @@
 import re
-from abc import abstractmethod
+from typing import Type, Dict, Callable, List
 
 from sqlalchemy.orm import Query
 
@@ -7,11 +7,8 @@ from .basestructures import UHFilterTypes
 from .basetypes import (
     UHQLBaseDataProvider,
     UHQLUserRequest,
-    UHQLBaseFilter,
     UHQLException,
 )
-
-from typing import Type, Dict, Callable, List
 
 T = Type
 
@@ -45,7 +42,7 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
             getattr(self, b)
             for b in dir(self)
             if re.match(full_pattern, b)
-            and getattr(getattr(self, b), "catch_pattern", None) is not None
+               and getattr(getattr(self, b), "catch_pattern", None) is not None
         ]
 
         print(candidates)
@@ -65,6 +62,16 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
         )
         return p[0][1] if p else None
 
+    def get_dict_from_obj(self, obj) -> dict:
+        """
+        @param obj:
+        @return: dict from obj
+        """
+
+        d = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+
+        return d
+
     def get_list(self, req: UHQLUserRequest) -> List[Dict]:
 
         get_handlers = self.__gethandlers("get_list")
@@ -78,6 +85,30 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
         results = base_query.one_or_none()
 
         return results
+
+    def create(self, req: UHQLUserRequest):
+
+        db_class = self.__get_sqlalchemy_class_from_tablename(req.resource)
+
+        for key in req.schema:
+            if hasattr(db_class, key):
+                continue
+            else:
+                raise UHQLException(f"Invalid field={key}")
+
+        obj = db_class(**req.schema)
+        self.dbsession.add(obj)
+        self.dbsession.commit()
+
+        return obj
+
+    def __create(self, db_class, jsonrequest):
+
+        obj = db_class(**jsonrequest)
+        self.dbsession.add(obj)
+        self.dbsession.commit()
+
+        return obj
 
     @catch_pattern("!tables")
     def __get_list_tables(self, req: UHQLUserRequest):
@@ -104,7 +135,7 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
 
             if _filter.op in valid_filters:
                 base_query = base_query.filter(
-                    eval(f"getattr(dbclass, _field) {_op} _value")
+                    eval(f"getattr(db_class, _field) {_op} _value")
                 )
                 continue
 

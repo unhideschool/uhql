@@ -75,3 +75,7 @@ class UHQLBaseDataProvider(metaclass=ABCMeta):
     @abstractmethod
     def get_one(self, req: UHQLUserRequest):
         pass
+
+    @abstractmethod
+    def create(self, req: UHQLUserRequest):
+        pass

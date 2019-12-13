@@ -20,6 +20,7 @@ class UHQL:
         self.d: UHQLBaseDataProvider = dataprovider
         self.extra_type_injector = extra_type_injector
         self.can_func = can_func
+
     # def build_from_schema(self, obj, schema):
     #     d = dict()
     #
@@ -148,3 +149,28 @@ class UHQL:
         get_one_data = self.build_from_schema(obj, user_request.schema)
 
         return get_one_data
+
+    @logged_method
+    def create(self, *, jsonrequest: dict):
+        """
+        create a new object by a schema.
+
+        @param jsonrequest: dict
+        @return: dict
+        """
+
+        try:
+            jsonschema.validate(jsonrequest, JSONContracts.uhql_request_contract)
+        except ValidationError as e:
+            raise UHQLException(e.message)
+
+        user_request = UHQLUserRequest(jsonrequest)
+
+        if callable(self.can_func):
+            if not self.can_func(user_request):
+                raise UHQLException("Unauthorized")
+
+        obj = self.d.create(user_request)
+        create_data = self.build_from_schema(obj, user_request.schema)
+
+        return create_data

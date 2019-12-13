@@ -6,7 +6,7 @@ from sqlalchemy import Column, Integer, create_engine, String, Boolean, ForeignK
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker, relationship
 
-from unhideapi.uhql import UHQL_SqlAlchemy
+from unhideapi.uhql import UHQL_SqlAlchemy, UHQLException
 
 # class BaseBackendFactory(factory.Factory):
 #     class Meta:
@@ -83,12 +83,11 @@ class UHQLTestSQLAlchemy(unittest.TestCase):
 
         self.user = UserFactory()
 
-
+    # GET_LIST TEST
     def test_get_list(self):
-
         get_list_schema = {
-                "id": "",
-                "occupation": {"name": ""}
+            "id": "",
+            "occupation": {"name": ""}
         }
 
         request_data = {
@@ -96,15 +95,15 @@ class UHQLTestSQLAlchemy(unittest.TestCase):
             "schema": get_list_schema
         }
 
-        objs = self.uhql.get_list(jsonrequest=request_data)
+        request = self.uhql.get_list(jsonrequest=request_data)
 
-        assert len(objs) == 1
+        assert len(request) == 1
 
-        for obj in objs:
+        for obj in request:
             jsonschema.validate(obj, get_list_schema)
 
+    # GET_ONE TEST
     def test_get_one(self):
-
         get_one_schema = {
             "id": "",
             "occupation": {}
@@ -116,6 +115,32 @@ class UHQLTestSQLAlchemy(unittest.TestCase):
             "schema": get_one_schema
         }
 
-        obj = self.uhql.get_one(jsonrequest=request_data)
+        request = self.uhql.get_one(jsonrequest=request_data)
 
-        jsonschema.validate(obj, get_one_schema)
+        jsonschema.validate(request, get_one_schema)
+
+    def test_create(self):
+        create_schema = {
+            "username": "donniedarko",
+            "email": "donnie@darko.test"
+        }
+
+        request_data = {
+            "resource": "Users",
+            "schema": create_schema
+        }
+
+        request = self.uhql.create(jsonrequest=request_data)
+        jsonschema.validate(request, create_schema)
+
+    def test_create_with_invalid_field(self):
+
+        request_data = {
+            "resource": "Users",
+            "schema": {"invalid_field": "invalid_value"}
+        }
+
+        with self.assertRaises(UHQLException) as context:
+            self.uhql.create(jsonrequest=request_data)
+
+        self.assertTrue(f"Invalid field=invalid_field" in str(context.exception))
