@@ -143,7 +143,7 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
             raise UHQLException("Invalid Filter")
 
         if order_by_criterion:
-            base_query = base_query.order_by(order_by_criterion)
+            base_query = base_query.order_by(order_by_criterion).de
 
         if page > 0:
             page -= 1
