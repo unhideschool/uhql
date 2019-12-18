@@ -4,11 +4,8 @@ from typing import Type, Dict, Callable, List
 from sqlalchemy.orm import Query
 
 from .basestructures import UHFilterTypes
-from .basetypes import (
-    UHQLBaseDataProvider,
-    UHQLUserRequest,
-    UHQLException,
-)
+from .basetypes import UHQLBaseDataProvider, UHQLUserRequest, UHQLException
+from ...model.spec import SAModelBase
 
 T = Type
 
@@ -42,7 +39,7 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
             getattr(self, b)
             for b in dir(self)
             if re.match(full_pattern, b)
-               and getattr(getattr(self, b), "catch_pattern", None) is not None
+            and getattr(getattr(self, b), "catch_pattern", None) is not None
         ]
 
         print(candidates)
@@ -67,6 +64,8 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
         @param obj:
         @return: dict from obj
         """
+        if type(obj) == dict:
+            return obj
 
         d = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
 
@@ -112,8 +111,10 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
 
     @catch_pattern("!tables")
     def __get_list_tables(self, req: UHQLUserRequest):
-        # TODO: virtual method
-        pass
+        return [
+            {"id": x, "tablename": y}
+            for x, y in list(enumerate(SAModelBase.metadata.tables))
+        ]
 
     def __get_generic_sqlalchemy(self, req: UHQLUserRequest) -> Query:
 
