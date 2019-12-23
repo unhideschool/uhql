@@ -1,14 +1,11 @@
 import re
 from typing import Type, Dict, Callable, List
 
+from sqlalchemy import Table
 from sqlalchemy.orm import Query
 
 from .basestructures import UHFilterTypes
-from .basetypes import (
-    UHQLBaseDataProvider,
-    UHQLUserRequest,
-    UHQLException,
-)
+from .basetypes import UHQLBaseDataProvider, UHQLUserRequest, UHQLException
 
 T = Type
 
@@ -112,8 +109,27 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
 
     @catch_pattern("!tables")
     def __get_list_tables(self, req: UHQLUserRequest):
-        # TODO: virtual method
-        pass
+        print(10)
+
+        def build_tabledict_from_satable(id: int, t: Table):
+            print(20)
+            r = {
+                id: id,
+                "name": t.name,
+                "fields": [
+                    (x.name, x.primary_key, str(x.type))
+                    for x in t.columns
+                ],
+            }
+
+            return r
+
+        return [
+            build_tabledict_from_satable(tableid, tableinstance)
+            for tableid, tableinstance in list(
+                enumerate(self.model_base.metadata.tables.values())
+            )
+        ]
 
     def __get_generic_sqlalchemy(self, req: UHQLUserRequest) -> Query:
 
