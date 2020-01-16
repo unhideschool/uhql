@@ -183,13 +183,29 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
 
     def __get_sqlalchemy_class_from_tablename(self, resource: str) -> T:
 
-        tableq = [
-            x
-            for x in self.model_base._decl_class_registry.values()
-            if hasattr(x, "__table__") and x.__table__.name == resource
-        ]
+        print("10")
 
-        if tableq:
-            return tableq[0]
+        def get_class_by_tablename(Base, tablename):
+            """Return class reference mapped to table.
+
+            :param tablename: String with name of table.
+            :return: Class reference or None.
+            """
+            for c in Base._decl_class_registry.values():
+                if hasattr(c, '__tablename__') and c.__tablename__ == tablename:
+                    return c
+
+        a = get_class_by_tablename(self.model_base, resource)
+
+        return a
+
+        # tableq = [
+        #     x
+        #     for x in self.model_base._decl_class_registry.values()
+        #     if hasattr(x, "__table__") and x.__table__.name == resource
+        # ]
+        #
+        # if tableq:
+        #     return tableq[0]
 
         raise Exception(f'Resource not found: "{resource}".')
