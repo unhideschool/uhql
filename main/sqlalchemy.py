@@ -65,7 +65,10 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
         @return: dict from obj
         """
 
-        d = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+        if isinstance(obj, self.model_base):
+            d = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+        elif isinstance(obj, dict):
+            d = obj
 
         return d
 
