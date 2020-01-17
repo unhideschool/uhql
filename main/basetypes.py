@@ -1,8 +1,9 @@
 # TODO: Criar plugin de Auth do UNHIDEAPI (mock: return true)
 # TODO: Criar plugin de DataProvider do UNHIDEAPI
 from abc import ABCMeta, abstractmethod
+from dataclasses import dataclass
 from decimal import Decimal
-from typing import Type, List, Union, Dict
+from typing import Type, List, Union, Dict, Any
 
 T = Type
 
@@ -59,7 +60,7 @@ class UHQLBaseDataProvider(metaclass=ABCMeta):
 
     def can(self, req: UHQLUserRequest) -> bool:
         """Can the user realize this operation on this resource??"""
-        return True
+        return bool(req)
 
     def get_dict_from_obj(self, obj) -> dict:
         if not isinstance(obj, dict):
@@ -79,3 +80,34 @@ class UHQLBaseDataProvider(metaclass=ABCMeta):
     @abstractmethod
     def create(self, req: UHQLUserRequest):
         pass
+
+
+@dataclass
+class UHQLColumnType:
+    name: str
+    type: str
+
+
+class UHQLBaseResultSet:
+    def __init__(self, data: List[Any], column_descriptions: List[Dict]):
+
+        self.data = data
+
+        self.columns = []
+        for column_description in column_descriptions:
+            self.columns.append(
+                UHQLColumnType(column_description["name"], column_description["type"])
+            )
+
+    def to_listdict(self) -> List[Dict]:
+        r = []
+
+        for result in self.data:
+
+            d = {}
+            for column in self.columns:
+                d[column.name] = getattr(result, column.name)
+
+            r.append(d)
+
+        return r

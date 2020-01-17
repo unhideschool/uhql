@@ -1,11 +1,13 @@
 import re
 from typing import Type, Dict, Callable, List
 
+import sqlalchemy
 from sqlalchemy import Table
 from sqlalchemy.orm import Query
+from sqlalchemy.util import KeyedTuple
 
 from .basestructures import UHFilterTypes
-from .basetypes import UHQLBaseDataProvider, UHQLUserRequest, UHQLException
+from .basetypes import UHQLBaseDataProvider, UHQLUserRequest, UHQLException, UHQLBaseResultSet
 
 T = Type
 
@@ -65,19 +67,29 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
         @return: dict from obj
         """
 
+        d = None
         if isinstance(obj, self.model_base):
             d = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
         elif isinstance(obj, dict):
             d = obj
 
-        return d
+        print("aeeee")
+
+        if d:
+            return d
+
+        raise Exception(f"Cannot generate dict -- implement type \"{type(obj)}\"...")
 
     def get_list(self, req: UHQLUserRequest) -> List[Dict]:
 
         get_handlers = self.__gethandlers("get_list")
         handler = self.get_best_handler(get_handlers, req.resource)
 
-        return handler(req)
+        resultset: UHQLBaseResultSet = handler(req)
+
+         data = resultset.to_listdict()
+
+        return data
 
     def get_one(self, req: UHQLUserRequest):
 
@@ -88,7 +100,7 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
 
     def create(self, req: UHQLUserRequest):
 
-        db_class = self.__get_sqlalchemy_class_from_tablename(req.resource)
+        db_class = self.__get_sqlalchemy_queryableobj_from_tablename(req.resource)
 
         for key in req.schema:
             if hasattr(db_class, key):
@@ -111,11 +123,22 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
         return obj
 
     @catch_pattern("!tables")
-    def __get_list_tables(self, req: UHQLUserRequest):
-        print(10)
+    def __get_list_tables(self, req: UHQLUserRequest) -> UHQLBaseResultSet:
+
+        column_descriptions = [
+            {
+                "name": "id",
+                "type": "integer"
+            },
+            {
+                "name": "name",
+                "type": "string"
+            }
+        ]
+
+        
 
         def build_tabledict_from_satable(id: int, t: Table):
-            print(20)
             r = {
                 id: id,
                 "name": t.name,
@@ -127,12 +150,16 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
 
             return r
 
-        return [
+        [
             build_tabledict_from_satable(tableid, tableinstance)
             for tableid, tableinstance in list(
-                enumerate(self.model_base.metadata.tables.values())
-            )
+            enumerate(self.model_base.metadata.tables.values())
+        )
         ]
+
+        r = UHQLBaseResultSet(None, column_descriptions)
+
+        return
 
     def __get_generic_sqlalchemy(self, req: UHQLUserRequest) -> Query:
 
@@ -143,7 +170,7 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
         filters = req.filters
         order_by_criterion = req.order_by
 
-        db_class = self.__get_sqlalchemy_class_from_tablename(resource)
+        db_class = self.__get_sqlalchemy_queryableobj_from_tablename(resource)
         base_query = self.dbsession.query(db_class)
 
         valid_filters = [x.value for x in UHFilterTypes]
@@ -171,9 +198,12 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
         return base_query
 
     @catch_pattern("")
-    def __get_list_sqlalchemy(self, req: UHQLUserRequest):
+    def __get_list_sqlalchemy(self, req: UHQLUserRequest) -> UHQLBaseResultSet:
 
-        results = self.__get_generic_sqlalchemy(req).all()
+        basequery = self.__get_generic_sqlalchemy(req)
+
+        results = UHQLBaseResultSet(basequery.all(), basequery.column_descriptions)
+
         return results
 
     def __get_one_sqlalchemy(self, req: UHQLUserRequest):
@@ -181,31 +211,21 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
         results = self.__get_generic_sqlalchemy(req).one_or_none()
         return results
 
-    def __get_sqlalchemy_class_from_tablename(self, resource: str) -> T:
+    def __get_sqlalchemy_queryableobj_from_tablename(self, resource: str) -> T:
 
         print("10")
 
-        def get_class_by_tablename(Base, tablename):
-            """Return class reference mapped to table.
+        # do we have a class?
+        for c in self.model_base._decl_class_registry.values():
+            if hasattr(c, '__tablename__') and c.__tablename__ == resource:
+                # return class
+                return c
 
-            :param tablename: String with name of table.
-            :return: Class reference or None.
-            """
-            for c in Base._decl_class_registry.values():
-                if hasattr(c, '__tablename__') and c.__tablename__ == tablename:
-                    return c
+        # no class? maybe we have a pure table.
+        if resource in self.model_base.metadata.tables:
+            # return table
+            t = self.model_base.metadata.tables[resource]
+            return t
 
-        a = get_class_by_tablename(self.model_base, resource)
-
-        return a
-
-        # tableq = [
-        #     x
-        #     for x in self.model_base._decl_class_registry.values()
-        #     if hasattr(x, "__table__") and x.__table__.name == resource
-        # ]
-        #
-        # if tableq:
-        #     return tableq[0]
-
+        # Error
         raise Exception(f'Resource not found: "{resource}".')
