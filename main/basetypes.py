@@ -1,6 +1,6 @@
 # TODO: Criar plugin de Auth do UNHIDEAPI (mock: return true)
 # TODO: Criar plugin de DataProvider do UNHIDEAPI
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, ABC
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Type, List, Union, Dict, Any
@@ -14,7 +14,7 @@ class UHQLException(Exception):
 
 class UHQLBaseFilter:
     def __init__(
-        self, field: str, op: str, value: Union[str, Decimal, int, bool, float]
+            self, field: str, op: str, value: Union[str, Decimal, int, bool, float]
     ):
         self.field = field
         self.op = op
@@ -88,7 +88,7 @@ class UHQLColumnType:
     type: str
 
 
-class UHQLBaseResultSet:
+class UHQLBaseResultSet(ABC):
     def __init__(self, data: List[Any], column_descriptions: List[Dict]):
 
         self.data = data
@@ -99,6 +99,7 @@ class UHQLBaseResultSet:
                 UHQLColumnType(column_description["name"], column_description["type"])
             )
 
+    @abstractmethod
     def to_listdict(self) -> List[Dict]:
         r = []
 
@@ -111,3 +112,8 @@ class UHQLBaseResultSet:
             r.append(d)
 
         return r
+
+
+class UHQLTableListResultSet(UHQLBaseResultSet):
+    def to_listdict(self) -> List[Dict]:
+        return self.data

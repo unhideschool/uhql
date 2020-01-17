@@ -7,7 +7,7 @@ from sqlalchemy.orm import Query
 from sqlalchemy.util import KeyedTuple
 
 from .basestructures import UHFilterTypes
-from .basetypes import UHQLBaseDataProvider, UHQLUserRequest, UHQLException, UHQLBaseResultSet
+from .basetypes import UHQLBaseDataProvider, UHQLUserRequest, UHQLException, UHQLBaseResultSet, UHQLTableListResultSet
 
 T = Type
 
@@ -87,7 +87,7 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
 
         resultset: UHQLBaseResultSet = handler(req)
 
-         data = resultset.to_listdict()
+        data = resultset.to_listdict()
 
         return data
 
@@ -140,7 +140,7 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
 
         def build_tabledict_from_satable(id: int, t: Table):
             r = {
-                id: id,
+                "id": id,
                 "name": t.name,
                 "fields": [
                     (x.name, x.primary_key, str(x.type))
@@ -150,16 +150,16 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
 
             return r
 
-        [
+        data = [
             build_tabledict_from_satable(tableid, tableinstance)
             for tableid, tableinstance in list(
             enumerate(self.model_base.metadata.tables.values())
         )
         ]
 
-        r = UHQLBaseResultSet(None, column_descriptions)
+        r = UHQLTableListResultSet(data, column_descriptions)
 
-        return
+        return r
 
     def __get_generic_sqlalchemy(self, req: UHQLUserRequest) -> Query:
 
@@ -170,8 +170,8 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
         filters = req.filters
         order_by_criterion = req.order_by
 
-        db_class = self.__get_sqlalchemy_queryableobj_from_tablename(resource)
-        base_query = self.dbsession.query(db_class)
+        db_object_or_class = self.__get_sqlalchemy_queryableobj_from_tablename(resource)
+        base_query = self.dbsession.query(db_object_or_class)
 
         valid_filters = [x.value for x in UHFilterTypes]
         for _filter in filters:
@@ -181,7 +181,7 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
 
             if _filter.op in valid_filters:
                 base_query = base_query.filter(
-                    eval(f"getattr(db_class, _field) {_op} _value")
+                    eval(f"getattr(db_object_or_class, _field) {_op} _value")
                 )
                 continue
 
