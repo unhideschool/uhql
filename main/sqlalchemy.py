@@ -42,8 +42,6 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
                and getattr(getattr(self, b), "catch_pattern", None) is not None
         ]
 
-        print(candidates)
-
         return candidates
 
     @staticmethod
@@ -102,20 +100,10 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
 
         return obj
 
-    def __create(self, db_class, jsonrequest):
-
-        obj = db_class(**jsonrequest)
-        self.dbsession.add(obj)
-        self.dbsession.commit()
-
-        return obj
-
     @catch_pattern("!tables")
     def __get_list_tables(self, req: UHQLUserRequest):
-        print(10)
 
         def build_tabledict_from_satable(id: int, t: Table):
-            print(20)
             r = {
                 id: id,
                 "name": t.name,
@@ -182,8 +170,6 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
         return results
 
     def __get_sqlalchemy_class_from_tablename(self, resource: str) -> T:
-
-        print("10")
 
         def get_class_by_tablename(Base, tablename):
             """Return class reference mapped to table.
