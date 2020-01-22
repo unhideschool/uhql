@@ -27,6 +27,7 @@ class JSONContracts:
                                 "!=",
                                 ">",
                                 "<",
+                                "like"
                             ],  # TODO: definir corretamente quais os tipos disponiveis.
                         },
                         "value": {

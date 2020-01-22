@@ -141,9 +141,19 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
             _op = _filter.op
 
             if _filter.op in valid_filters:
-                base_query = base_query.filter(
-                    eval(f"getattr(db_class, _field) {_op} _value")
-                )
+
+                if _filter.op == UHFilterTypes.LIKE.value:
+                    base_query = base_query.filter(
+
+                        eval(f"getattr(db_class, _field).ilike(_value)")
+                    )
+
+                else:
+
+                    base_query = base_query.filter(
+                        eval(f"getattr(db_class, _field) {_op} _value")
+                    )
+
                 continue
 
             # Invalid operation specified.

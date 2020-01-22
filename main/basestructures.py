@@ -13,3 +13,4 @@ class UHFilterTypes(Enum):
     DIFFERENT = "!="
     GREATER_THAN = ">"
     LESSER_THAN = "<"
+    LIKE = 'like'

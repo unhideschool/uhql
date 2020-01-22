@@ -102,6 +102,26 @@ class UHQLTestSQLAlchemy(unittest.TestCase):
         for obj in request:
             jsonschema.validate(obj, get_list_schema)
 
+    # GET_LIST_FILTERS TEST
+    def test_get_list_filters(self):
+        get_list_schema = {
+            "id": "",
+            "email": ""
+        }
+
+        request_data = {
+            "resource": "Users",
+            "filters": [{"field": "email", "op": "like", "value": f"{self.user.email}"}],
+            "schema": get_list_schema
+        }
+
+        request = self.uhql.get_list(jsonrequest=request_data)
+
+        assert len(request) == 1
+
+        for obj in request:
+            jsonschema.validate(obj, get_list_schema)
+
     # GET_ONE TEST
     def test_get_one(self):
         get_one_schema = {
