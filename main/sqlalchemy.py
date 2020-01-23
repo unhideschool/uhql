@@ -2,12 +2,13 @@ import re
 from typing import Type, Dict, Callable, List
 
 import sqlalchemy
-from sqlalchemy import Table
+from sqlalchemy import Table, inspect
 from sqlalchemy.orm import Query
 from sqlalchemy.util import KeyedTuple
 
 from .basestructures import UHFilterTypes
-from .basetypes import UHQLBaseDataProvider, UHQLUserRequest, UHQLException, UHQLBaseResultSet, UHQLTableListResultSet
+from .basetypes import UHQLBaseDataProvider, UHQLUserRequest, UHQLException, UHQLBaseResultSet, UHQLTableListResultSet, \
+    UHQLModelClassResultSet, UHQLTableObjClassResultSet
 
 T = Type
 
@@ -161,7 +162,7 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
 
         return r
 
-    def __get_generic_sqlalchemy(self, req: UHQLUserRequest) -> Query:
+    def __get_generic_sqlalchemy(self, req: UHQLUserRequest) -> (Query, UHQLBaseResultSet):
 
         resource = req.resource
         schema = req.schema
@@ -170,8 +171,14 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
         filters = req.filters
         order_by_criterion = req.order_by
 
+        resultsetclass: UHQLBaseResultSet = UHQLModelClassResultSet
+
         db_object_or_class = self.__get_sqlalchemy_queryableobj_from_tablename(resource)
         base_query = self.dbsession.query(db_object_or_class)
+        if isinstance(db_object_or_class, Table):
+        #if not issubclass(db_object_or_class, self.model_base):
+            # it's a table
+            resultsetclass = UHQLTableObjClassResultSet
 
         valid_filters = [x.value for x in UHFilterTypes]
         for _filter in filters:
@@ -195,14 +202,14 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
             page -= 1
             base_query = base_query.limit(perpage).offset(page * perpage)
 
-        return base_query
+        return base_query, resultsetclass
 
     @catch_pattern("")
     def __get_list_sqlalchemy(self, req: UHQLUserRequest) -> UHQLBaseResultSet:
 
-        basequery = self.__get_generic_sqlalchemy(req)
+        basequery, resultsetclass = self.__get_generic_sqlalchemy(req)
 
-        results = UHQLBaseResultSet(basequery.all(), basequery.column_descriptions)
+        results = resultsetclass(basequery.all(), basequery.column_descriptions)
 
         return results
 

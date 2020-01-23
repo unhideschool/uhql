@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Type, List, Union, Dict, Any
 
+from sqlalchemy import inspect
+
 T = Type
 
 
@@ -86,20 +88,52 @@ class UHQLBaseDataProvider(metaclass=ABCMeta):
 class UHQLColumnType:
     name: str
     type: str
+    primarykey: bool = False
 
 
 class UHQLBaseResultSet(ABC):
-    def __init__(self, data: List[Any], column_descriptions: List[Dict]):
-
+    def __init__(self, data: List[Any], column_descriptions: Any):
         self.data = data
+        self.data_column_descriptions = column_descriptions
 
-        self.columns = []
-        for column_description in column_descriptions:
-            self.columns.append(
-                UHQLColumnType(column_description["name"], column_description["type"])
-            )
+        self.columns: List[UHQLColumnType] = []
+        self.process_columns()
 
     @abstractmethod
+    def process_columns(self):
+        pass
+
+    @abstractmethod
+    def to_listdict(self) -> List[Dict]:
+        pass
+
+
+class UHQLModelClassResultSet(UHQLBaseResultSet):
+    def process_columns(self):
+        self.columns = [
+            UHQLColumnType(x.name, str(x.type), x.primary_key) for x in inspect(self.data_column_descriptions[0]['type']).columns]
+
+    def to_listdict(self) -> List[Dict]:
+        r = []
+
+        for result in self.data:
+
+            d = {}
+            for column in self.columns:
+                d['id' if column.primarykey else column.name] = getattr(result, column.name)
+
+            r.append(d)
+
+        return r
+
+
+class UHQLTableObjClassResultSet(UHQLBaseResultSet):
+    def process_columns(self):
+        self.columns = [
+            (UHQLColumnType(x['name'], str(x['type'])))
+            for x in self.data_column_descriptions
+        ]
+
     def to_listdict(self) -> List[Dict]:
         r = []
 
@@ -115,5 +149,8 @@ class UHQLBaseResultSet(ABC):
 
 
 class UHQLTableListResultSet(UHQLBaseResultSet):
+    def process_columns(self):
+        return [UHQLColumnType(x['name'], x['type']) for x in self.data_column_descriptions]
+
     def to_listdict(self) -> List[Dict]:
         return self.data
