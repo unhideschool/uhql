@@ -126,7 +126,7 @@ class UHQL:
         ]
 
         if callable(self.post_func):
-            self.post_func()
+            self.post_func(user_request)
 
         return get_list_data
 
