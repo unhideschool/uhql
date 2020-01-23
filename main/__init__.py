@@ -16,10 +16,12 @@ class UHQL:
             dataprovider: UHQLBaseDataProvider,
             extra_type_injector: Callable[[dict, str], T] = None,
             can_func: Callable[[UHQLUserRequest], bool] = None,
+            post_func: Callable[[UHQLUserRequest], bool] = None,
     ):
         self.d: UHQLBaseDataProvider = dataprovider
         self.extra_type_injector = extra_type_injector
         self.can_func = can_func
+        self.post_func = post_func
 
     # def build_from_schema(self, obj, schema):
     #     d = dict()
@@ -123,6 +125,9 @@ class UHQL:
             for obj in self.d.get_list(user_request)
         ]
 
+        if callable(self.post_func):
+            self.post_func()
+
         return get_list_data
 
     @logged_method
@@ -148,6 +153,9 @@ class UHQL:
         obj = self.d.get_one(user_request)
         get_one_data = self.build_from_schema(obj, user_request.schema)
 
+        if callable(self.post_func):
+            self.post_func()
+
         return get_one_data
 
     @logged_method
@@ -172,5 +180,8 @@ class UHQL:
 
         obj = self.d.create(user_request)
         create_data = self.build_from_schema(obj, user_request.schema)
+
+        if callable(self.post_func):
+            self.post_func()
 
         return create_data
