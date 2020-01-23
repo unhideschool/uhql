@@ -154,7 +154,7 @@ class UHQL:
         get_one_data = self.build_from_schema(obj, user_request.schema)
 
         if callable(self.post_func):
-            self.post_func()
+            self.post_func(user_request)
 
         return get_one_data
 
@@ -182,6 +182,6 @@ class UHQL:
         create_data = self.build_from_schema(obj, user_request.schema)
 
         if callable(self.post_func):
-            self.post_func()
+            self.post_func(user_request)
 
         return create_data
