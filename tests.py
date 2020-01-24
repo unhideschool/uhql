@@ -83,7 +83,9 @@ class UHQLTestSQLAlchemy(unittest.TestCase):
 
         self.user = UserFactory()
 
-    # GET_LIST TEST
+    ###########
+    # GET LIST
+    ###########
     def test_get_list(self):
         get_list_schema = {
             "id": "",
@@ -122,7 +124,9 @@ class UHQLTestSQLAlchemy(unittest.TestCase):
         for obj in request:
             jsonschema.validate(obj, get_list_schema)
 
-    # GET_ONE TEST
+    ###########
+    # GET ONE
+    ###########
     def test_get_one(self):
         get_one_schema = {
             "id": "",
@@ -139,6 +143,9 @@ class UHQLTestSQLAlchemy(unittest.TestCase):
 
         jsonschema.validate(request, get_one_schema)
 
+    ###########
+    # CREATE
+    ###########
     def test_create(self):
         create_schema = {
             "username": "donniedarko",
@@ -165,6 +172,45 @@ class UHQLTestSQLAlchemy(unittest.TestCase):
 
         self.assertTrue(f"Invalid field=invalid_field" in str(context.exception))
 
+    ###########
+    # UPDATE
+    ###########
+    def test_update(self):
+        filters = [{"field": "id", "op": "==", "value": self.user.id}]
+
+        request_data = {
+            "resource": "Users",
+            "filters": filters,
+            "schema": {
+                "email": "daniellarusso@darko.test"
+            }
+        }
+
+        request = self.uhql.update(jsonrequest=request_data)
+
+        user = self.session.query(User).filter(User.username == self.user.username).one_or_none()
+        assert user.email == "daniellarusso@darko.test"
+
+    def test_update_with_invalid_field(self):
+        filters = [{"field": "id", "op": "==", "value": self.user.id}]
+
+        request_data = {
+            "resource": "Users",
+            "filters": filters,
+            "schema": {
+                "email": "daniellarusso@darko.test",
+                "occupation": "software developer"
+            }
+        }
+
+        with self.assertRaises(UHQLException) as context:
+            self.uhql.update(jsonrequest=request_data)
+
+        self.assertTrue(f"Invalid field=occupation" in str(context.exception))
+
+    ###########
+    # DELETE
+    ###########
     def test_delete(self):
         filters = [{"field": "id", "op": "==", "value": self.user.id}]
 
@@ -176,6 +222,20 @@ class UHQLTestSQLAlchemy(unittest.TestCase):
 
         request = self.uhql.delete(jsonrequest=request_data)
 
-        user = self.session.query(User).filter(User.id == self.user.id).one_or_none()
+        user = self.session.query(User).filter(User.username == self.user.username).one_or_none()
 
         assert user is None
+
+    def test_delete_with_invalid_object(self):
+        filters = [{"field": "id", "op": "==", "value": 9999}]
+
+        request_data = {
+            "resource": "Users",
+            "filters": filters,
+            "schema": {}
+        }
+
+        with self.assertRaises(UHQLException) as context:
+            self.uhql.update(jsonrequest=request_data)
+
+        self.assertTrue(f"Object not found" in str(context.exception))

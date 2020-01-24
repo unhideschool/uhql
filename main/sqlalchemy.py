@@ -101,8 +101,26 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
         return obj
 
     def update(self, req: UHQLUserRequest):
-        pass
+        db_class = self.__get_sqlalchemy_class_from_tablename(req.resource)
 
+        base_query = self.__get_generic_sqlalchemy(req)
+        obj = base_query.one_or_none()
+
+        if not obj:
+            raise UHQLException(f"Object not found")
+
+        for key in req.schema:
+            try:
+                if hasattr(db_class, key):
+                    new_value = req.schema[key]
+
+                    if getattr(obj, key) != new_value:
+                        setattr(obj, key, new_value)
+                else:
+                    raise UHQLException(f"Invalid field={key}")
+
+            except Exception as ex:
+                raise UHQLException(f"Invalid field={key}")
 
     def delete(self, req: UHQLUserRequest):
 
