@@ -79,3 +79,7 @@ class UHQLBaseDataProvider(metaclass=ABCMeta):
     @abstractmethod
     def create(self, req: UHQLUserRequest):
         pass
+
+    @abstractmethod
+    def delete(self, req: UHQLUserRequest):
+        pass

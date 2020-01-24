@@ -164,3 +164,18 @@ class UHQLTestSQLAlchemy(unittest.TestCase):
             self.uhql.create(jsonrequest=request_data)
 
         self.assertTrue(f"Invalid field=invalid_field" in str(context.exception))
+
+    def test_delete(self):
+        filters = [{"field": "id", "op": "==", "value": self.user.id}]
+
+        request_data = {
+            "resource": "Users",
+            "filters": filters,
+            "schema": {}
+        }
+
+        request = self.uhql.delete(jsonrequest=request_data)
+
+        user = self.session.query(User).filter(User.id == self.user.id).one_or_none()
+
+        assert user is None

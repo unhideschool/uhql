@@ -100,6 +100,23 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
 
         return obj
 
+    def update(self, req: UHQLUserRequest):
+        pass
+
+
+    def delete(self, req: UHQLUserRequest):
+
+        base_query = self.__get_generic_sqlalchemy(req)
+        obj = base_query.one_or_none()
+
+        if not obj:
+            raise UHQLException(f"Object not found")
+
+        self.dbsession.delete(obj)
+        self.dbsession.commit()
+
+        return obj
+
     @catch_pattern("!tables")
     def __get_list_tables(self, req: UHQLUserRequest):
 

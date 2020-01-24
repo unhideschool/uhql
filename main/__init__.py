@@ -185,3 +185,24 @@ class UHQL:
             self.post_func(user_request)
 
         return create_data
+
+    @logged_method
+    def delete(self, *, jsonrequest: dict):
+        """
+        create a new object by a schema.
+
+        @param jsonrequest: dict
+        @return: dict
+        """
+        user_request = UHQLUserRequest(jsonrequest)
+
+        if callable(self.can_func):
+            if not self.can_func(user_request):
+                raise UHQLException("Unauthorized")
+
+        result = self.d.delete(user_request)
+
+        if callable(self.post_func):
+            self.post_func(user_request)
+
+        return result
