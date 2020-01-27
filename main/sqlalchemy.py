@@ -122,6 +122,8 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
             except Exception as ex:
                 raise UHQLException(f"Invalid field={key}")
 
+        self.dbsession.commit()
+
     def delete(self, req: UHQLUserRequest):
 
         base_query = self.__get_generic_sqlalchemy(req)
