@@ -16,52 +16,12 @@ class UHQL:
             dataprovider: UHQLBaseDataProvider,
             extra_type_injector: Callable[[dict, str], T] = None,
             can_func: Callable[[UHQLUserRequest], bool] = None,
-            post_func: Callable[[UHQLUserRequest], bool] = None,
+            post_update_hook: Callable[[UHQLUserRequest, T], bool] = None,
     ):
         self.d: UHQLBaseDataProvider = dataprovider
         self.extra_type_injector = extra_type_injector
         self.can_func = can_func
-        self.post_func = post_func
-
-    # def build_from_schema(self, obj, schema):
-    #     d = dict()
-    #
-    #     if "properties" not in schema:
-    #         return obj
-    #
-    #     for key in schema["properties"].keys():
-    #
-    #         if not hasattr(obj, key):
-    #             # key not in object
-    #             continue
-    #
-    #         prop = getattr(obj, key)
-    #
-    #         # Try to use our extra type injector
-    #         if callable(self.extra_type_injector):
-    #             extra_type_injector_response = self.extra_type_injector(prop, key)
-    #             if extra_type_injector_response:
-    #                 d[key] = extra_type_injector_response
-    #                 continue
-    #
-    #         if "type" not in schema["properties"][key]:
-    #             d[key] = prop
-    #
-    #         elif schema["properties"][key]["type"] == "object":
-    #
-    #             d[key] = self.build_from_schema(prop, schema["properties"][key])
-    #
-    #         elif schema["properties"][key]["type"] == "array":
-    #
-    #             d[key] = [
-    #                 self.build_from_schema(item, schema["properties"][key]["items"][0])
-    #                 for item in prop
-    #             ]
-    #
-    #         else:
-    #             d[key] = prop
-    #
-    #     return d
+        self.post_update_hook = post_update_hook
 
     def build_from_schema(self, obj, schema):
         d = dict()
@@ -125,8 +85,8 @@ class UHQL:
             for obj in self.d.get_list(user_request)
         ]
 
-        if callable(self.post_func):
-            self.post_func(user_request)
+        if callable(self.post_update_hook):
+            self.post_update_hook(user_request)
 
         return get_list_data
 
@@ -153,8 +113,8 @@ class UHQL:
         obj = self.d.get_one(user_request)
         get_one_data = self.build_from_schema(obj, user_request.schema)
 
-        if callable(self.post_func):
-            self.post_func(user_request)
+        if callable(self.post_update_hook):
+            self.post_update_hook(user_request)
 
         return get_one_data
 
@@ -181,8 +141,8 @@ class UHQL:
         obj = self.d.create(user_request)
         create_data = self.build_from_schema(obj, user_request.schema)
 
-        if callable(self.post_func):
-            self.post_func(user_request)
+        if callable(self.post_update_hook):
+            self.post_update_hook(user_request, obj)
 
         return create_data
 
@@ -202,8 +162,8 @@ class UHQL:
 
         result = self.d.update(user_request)
 
-        if callable(self.post_func):
-            self.post_func(user_request)
+        if callable(self.post_update_hook):
+            self.post_update_hook(user_request)
 
         return result
 
@@ -223,7 +183,7 @@ class UHQL:
 
         result = self.d.delete(user_request)
 
-        if callable(self.post_func):
-            self.post_func(user_request)
+        if callable(self.post_update_hook):
+            self.post_update_hook(user_request)
 
         return result
