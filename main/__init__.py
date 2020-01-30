@@ -86,7 +86,7 @@ class UHQL:
         ]
 
         if callable(self.post_update_hook):
-            self.post_update_hook(user_request)
+            self.post_update_hook(user_request, get_list_data)
 
         return get_list_data
 
@@ -114,7 +114,7 @@ class UHQL:
         get_one_data = self.build_from_schema(obj, user_request.schema)
 
         if callable(self.post_update_hook):
-            self.post_update_hook(user_request)
+            self.post_update_hook(user_request, obj)
 
         return get_one_data
 
@@ -163,7 +163,7 @@ class UHQL:
         result = self.d.update(user_request)
 
         if callable(self.post_update_hook):
-            self.post_update_hook(user_request)
+            self.post_update_hook(user_request, result)
 
         return result
 
@@ -184,6 +184,6 @@ class UHQL:
         result = self.d.delete(user_request)
 
         if callable(self.post_update_hook):
-            self.post_update_hook(user_request)
+            self.post_update_hook(user_request, result)
 
         return result

@@ -124,6 +124,8 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
 
         self.dbsession.commit()
 
+        return obj
+
     def delete(self, req: UHQLUserRequest):
 
         base_query = self.__get_generic_sqlalchemy(req)
