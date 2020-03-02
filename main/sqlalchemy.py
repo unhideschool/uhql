@@ -1,7 +1,7 @@
 import re
 from typing import Type, Dict, Callable, List
 
-from sqlalchemy import Table
+from sqlalchemy import Table, text
 from sqlalchemy.orm import Query
 
 from .basestructures import UHFilterTypes
@@ -199,7 +199,7 @@ class UHQLSqlAlchemyDataProvider(UHQLBaseDataProvider):
             raise UHQLException("Invalid Filter")
 
         if order_by_criterion:
-            base_query = base_query.order_by(order_by_criterion)
+            base_query = base_query.order_by(text(order_by_criterion))
 
         if page > 0:
             page -= 1
